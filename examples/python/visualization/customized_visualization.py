@@ -33,7 +33,6 @@ def custom_draw_geometry_with_custom_fov(pcd, fov_step):
 
 
 def custom_draw_geometry_with_rotation(pcd):
-
     def rotate_view(vis):
         ctr = vis.get_view_control()
         ctr.rotate(10.0, 0.0)
@@ -53,7 +52,6 @@ def custom_draw_geometry_load_option(pcd):
 
 
 def custom_draw_geometry_with_key_callback(pcd):
-
     def change_background_to_black(vis):
         opt = vis.get_render_option()
         opt.background_color = np.asarray([0, 0, 0])
@@ -86,9 +84,9 @@ def custom_draw_geometry_with_key_callback(pcd):
 
 def custom_draw_geometry_with_camera_trajectory(pcd):
     custom_draw_geometry_with_camera_trajectory.index = -1
-    custom_draw_geometry_with_camera_trajectory.trajectory =\
-            o3d.io.read_pinhole_camera_trajectory(
-                    "../../test_data/camera_trajectory.json")
+    custom_draw_geometry_with_camera_trajectory.trajectory = \
+        o3d.io.read_pinhole_camera_trajectory(
+            "../../test_data/camera_trajectory.json")
     custom_draw_geometry_with_camera_trajectory.vis = o3d.visualization.Visualizer(
     )
     if not os.path.exists("../../test_data/image/"):
@@ -110,19 +108,19 @@ def custom_draw_geometry_with_camera_trajectory(pcd):
             print("Capture image {:05d}".format(glb.index))
             depth = vis.capture_depth_float_buffer(False)
             image = vis.capture_screen_float_buffer(False)
-            plt.imsave("../../test_data/depth/{:05d}.png".format(glb.index),\
-                    np.asarray(depth), dpi = 1)
-            plt.imsave("../../test_data/image/{:05d}.png".format(glb.index),\
-                    np.asarray(image), dpi = 1)
-            #vis.capture_depth_image("depth/{:05d}.png".format(glb.index), False)
-            #vis.capture_screen_image("image/{:05d}.png".format(glb.index), False)
+            plt.imsave("../../test_data/depth/{:05d}.png".format(glb.index), \
+                       np.asarray(depth), dpi=1)
+            plt.imsave("../../test_data/image/{:05d}.png".format(glb.index), \
+                       np.asarray(image), dpi=1)
+            # vis.capture_depth_image("depth/{:05d}.png".format(glb.index), False)
+            # vis.capture_screen_image("image/{:05d}.png".format(glb.index), False)
         glb.index = glb.index + 1
         if glb.index < len(glb.trajectory.parameters):
             ctr.convert_from_pinhole_camera_parameters(
                 glb.trajectory.parameters[glb.index])
         else:
-            custom_draw_geometry_with_camera_trajectory.vis.\
-                    register_animation_callback(None)
+            custom_draw_geometry_with_camera_trajectory.vis. \
+                register_animation_callback(None)
         return False
 
     vis = custom_draw_geometry_with_camera_trajectory.vis

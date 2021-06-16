@@ -100,8 +100,8 @@ def actions():
         "geometry": bunny,
         "is_visible": False
     }],
-             actions=[("Create Mesh", make_mesh),
-                      ("Toggle truth/result", toggle_result)])
+        actions=[("Create Mesh", make_mesh),
+                 ("Toggle truth/result", toggle_result)])
 
 
 def get_icp_transform(source, target, source_indices, target_indices):
@@ -175,9 +175,9 @@ def selections():
         "name": target_name,
         "geometry": target
     }],
-             actions=[("ICP Registration (one set)", do_icp_one_set),
-                      ("ICP Registration (two sets)", do_icp_two_sets)],
-             show_ui=True)
+        actions=[("ICP Registration (one set)", do_icp_one_set),
+                 ("ICP Registration (two sets)", do_icp_two_sets)],
+        show_ui=True)
 
 
 def time_animation():
@@ -225,7 +225,7 @@ def groups():
     for z in range(0, 10):
         for x in range(0, 10):
             max_h = max_height * (1.0 - abs(half - x) / half) * (
-                1.0 - abs(half - z) / half)
+                    1.0 - abs(half - z) / half)
             h = random.uniform(min_height, max(max_h, min_height + 1.0))
             box = o3d.geometry.TriangleMesh.create_box(0.9, h, 0.9)
             box.compute_triangle_normals()
@@ -263,7 +263,6 @@ def groups():
 
 
 def remove():
-
     def make_sphere(name, center, color, group, time):
         sphere = o3d.geometry.TriangleMesh.create_sphere(0.5)
         sphere.compute_vertex_normals()

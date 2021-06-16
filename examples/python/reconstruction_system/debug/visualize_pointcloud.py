@@ -9,9 +9,11 @@ import json
 import math
 import sys
 import open3d as o3d
+
 sys.path.append("../utility")
 from file import *
 from visualization import *
+
 sys.path.append(".")
 from initialize_config import *
 from make_fragments import *
@@ -66,19 +68,19 @@ if __name__ == "__main__":
                     args.path_intrinsic)
             else:
                 pinhole_camera_intrinsic = \
-                        o3d.camera.PinholeCameraIntrinsic(
+                    o3d.camera.PinholeCameraIntrinsic(
                         o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault)
             pcds = []
             [color_files, depth_files] = \
-                    get_rgbd_file_lists(config["path_dataset"])
+                get_rgbd_file_lists(config["path_dataset"])
             n_files = len(color_files)
             n_fragments = int(math.ceil(float(n_files) / \
-                    config['n_frames_per_fragment']))
+                                        config['n_frames_per_fragment']))
             sid = int(args.fragment) * config['n_frames_per_fragment']
             eid = min(sid + config['n_frames_per_fragment'], n_files)
             pose_graph = o3d.io.read_pose_graph(join(config["path_dataset"],
-                    config["template_fragment_posegraph_optimized"] % \
-                    int(args.fragment)))
+                                                     config["template_fragment_posegraph_optimized"] % \
+                                                     int(args.fragment)))
 
             for i in range(sid, eid):
                 print("appending rgbd image %d" % i)

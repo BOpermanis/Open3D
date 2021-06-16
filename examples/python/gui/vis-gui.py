@@ -319,7 +319,6 @@ class AppWindow:
         self._ibl_map = gui.Combobox()
         for ibl in glob.glob(gui.Application.instance.resource_path +
                              "/*_ibl.ktx"):
-
             self._ibl_map.add_item(os.path.basename(ibl[:-8]))
         self._ibl_map.selected_text = AppWindow.DEFAULT_IBL
         self._ibl_map.set_on_selection_changed(self._on_new_ibl)
@@ -494,7 +493,7 @@ class AppWindow:
         self._sun_dir.vector_value = self.settings.sun_dir
         self._sun_color.color_value = self.settings.sun_color
         self._material_prefab.enabled = (
-            self.settings.material.shader == Settings.LIT)
+                self.settings.material.shader == Settings.LIT)
         c = gui.Color(self.settings.material.base_color[0],
                       self.settings.material.base_color[1],
                       self.settings.material.base_color[2],

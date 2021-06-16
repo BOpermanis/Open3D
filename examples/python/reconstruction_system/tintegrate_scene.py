@@ -13,6 +13,7 @@ import argparse
 
 sys.path.append("../utility")
 from file import *
+
 sys.path.append(".")
 
 if __name__ == '__main__':
@@ -21,8 +22,8 @@ if __name__ == '__main__':
         'dataset_path',
         type=str,
         help='path to the dataset.'
-        'It should contain 16bit depth images in a folder named depth/'
-        'and rgb images in a folder named color/ or rgb/')
+             'It should contain 16bit depth images in a folder named depth/'
+             'and rgb images in a folder named color/ or rgb/')
     parser.add_argument('trajectory_path',
                         type=str,
                         help='path to the trajectory in open3d\'s .log format')
@@ -33,25 +34,25 @@ if __name__ == '__main__':
     parser.add_argument('--intrinsic_path',
                         type=str,
                         help='path to the intrinsic.json config file.'
-                        'By default PrimeSense intrinsics is used.')
+                             'By default PrimeSense intrinsics is used.')
     parser.add_argument(
         '--block_count',
         type=int,
         default=100,
         help='estimated number of 16x16x16 voxel blocks to represent a scene.'
-        'Typically with a 6mm resolution,'
-        'a lounge scene requires around 30K blocks,'
-        'while a large apartment requires 80K blocks.'
-        'Open3D will dynamically increase the block count on demand,'
-        'but a rough upper bound will be useful especially when memory is limited.'
+             'Typically with a 6mm resolution,'
+             'a lounge scene requires around 30K blocks,'
+             'while a large apartment requires 80K blocks.'
+             'Open3D will dynamically increase the block count on demand,'
+             'but a rough upper bound will be useful especially when memory is limited.'
     )
     parser.add_argument(
         '--voxel_size',
         type=float,
         default=3.0 / 512,
         help='voxel resolution.'
-        'For small scenes, 6mm preserves fine details.'
-        'For large indoor scenes, 1cm or larger will be reasonable for limited memory.'
+             'For small scenes, 6mm preserves fine details.'
+             'For large indoor scenes, 1cm or larger will be reasonable for limited memory.'
     )
     parser.add_argument(
         '--depth_scale',

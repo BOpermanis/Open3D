@@ -7,6 +7,7 @@
 import zipfile
 import os
 import sys
+
 if (sys.version_info > (3, 0)):
     pyver = 3
     from urllib.request import Request, urlopen
@@ -25,8 +26,9 @@ def get_redwood_dataset():
         # download and unzip dataset
         for name in dataset_names:
             print("==================================")
-            file_downloader("https://github.com/intel-isl/open3d_downloads/releases/download/redwood/%s-fragments-ply.zip" % \
-                    name)
+            file_downloader(
+                "https://github.com/intel-isl/open3d_downloads/releases/download/redwood/%s-fragments-ply.zip" % \
+                name)
             unzip_data("%s-fragments-ply.zip" % name,
                        "%s/%s" % (dataset_path, name))
             os.remove("%s-fragments-ply.zip" % name)
@@ -56,7 +58,7 @@ def file_downloader(url):
         if progress + 10 <= (file_size_dl * 100. / file_size):
             progress = progress + 10
             print(" %.1f / %.1f MB (%.0f %%)" % \
-                    (file_size_dl/(1024*1024), file_size/(1024*1024), progress))
+                  (file_size_dl / (1024 * 1024), file_size / (1024 * 1024), progress))
     f.close()
 
 

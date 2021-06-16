@@ -9,9 +9,11 @@ import json
 import argparse
 import sys
 import open3d as o3d
+
 sys.path.append("../utility")
 from file import *
 from visualization import *
+
 sys.path.append(".")
 from initialize_config import *
 
@@ -71,17 +73,17 @@ if __name__ == "__main__":
         n_nodes = len(pose_graph.nodes)
         n_edges = len(pose_graph.edges)
         print("Global o3d.pipelines.registration.PoseGraph having %d nodes and %d edges" % \
-                (n_nodes, n_edges))
+              (n_nodes, n_edges))
 
         # visualize alignment of posegraph edges
         for edge in pose_graph.edges:
             print("o3d.pipelines.registration.PoseGraphEdge %d-%d" % \
-                    (edge.source_node_id, edge.target_node_id))
+                  (edge.source_node_id, edge.target_node_id))
             if ((args.adjacent and \
-                    edge.target_node_id - edge.source_node_id == 1)) or \
+                 edge.target_node_id - edge.source_node_id == 1)) or \
                     (not args.adjacent and
-                    (args.source_id == edge.source_node_id and \
-                    args.target_id == edge.target_node_id)) or \
+                     (args.source_id == edge.source_node_id and \
+                      args.target_id == edge.target_node_id)) or \
                     args.all:
                 print("    confidence : %.3f" % edge.confidence)
                 source = o3d.io.read_point_cloud(

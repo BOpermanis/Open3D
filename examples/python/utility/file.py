@@ -50,7 +50,7 @@ def get_rgbd_folders(path_dataset):
 def get_rgbd_file_lists(path_dataset):
     path_color, path_depth = get_rgbd_folders(path_dataset)
     color_files = get_file_list(path_color, ".jpg") + \
-            get_file_list(path_color, ".png")
+                  get_file_list(path_color, ".png")
     depth_files = get_file_list(path_depth, ".png")
     return color_files, depth_files
 
@@ -68,9 +68,9 @@ def check_folder_structure(path_dataset):
         return
     path_color, path_depth = get_rgbd_folders(path_dataset)
     assert exists(path_depth), \
-            "Path %s is not exist!" % path_depth
+        "Path %s is not exist!" % path_depth
     assert exists(path_color), \
-            "Path %s is not exist!" % path_color
+        "Path %s is not exist!" % path_color
 
 
 def write_poses_to_log(filename, poses):

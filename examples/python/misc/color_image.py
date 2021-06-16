@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 import open3d as o3d
-#conda install pillow matplotlib
+
+# conda install pillow matplotlib
 
 if __name__ == "__main__":
 

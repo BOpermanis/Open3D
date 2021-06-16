@@ -8,6 +8,7 @@ import struct
 import zipfile
 import os
 import sys
+
 if (sys.version_info > (3, 0)):
     pyver = 3
     from urllib.request import Request, urlopen
@@ -64,7 +65,7 @@ def preprocess_and_save(source_folder,
 
     print(
         "Converting .bin to .ply files and pre-processing from frame {} to index {}"
-        .format(start_idx, end_idx))
+            .format(start_idx, end_idx))
 
     if (end_idx < start_idx):
         raise RuntimeError("End index must be smaller than start index.")
@@ -122,7 +123,7 @@ def file_downloader(url):
         if progress + 10 <= (file_size_dl * 100. / file_size):
             progress = progress + 10
             print(" %.1f / %.1f MB (%.0f %%)" % \
-                    (file_size_dl/(1024*1024), file_size/(1024*1024), progress))
+                  (file_size_dl / (1024 * 1024), file_size / (1024 * 1024), progress))
     f.close()
 
 
@@ -151,7 +152,7 @@ def get_kitti_sample_dataset(dataset_path, dataset_name):
     else:
         print(
             "The folder: {}, already exists. To re-download, kindly delete the folder and re-run this script."
-            .format(path))
+                .format(path))
 
 
 def find_source_pcd_folder_path(dataset_name):

@@ -6,8 +6,10 @@
 
 import open3d as o3d
 import os, sys
+
 sys.path.append("../utility")
 from common import *
+
 sys.path.append("../geometry")
 from trajectory_io import *
 from shutil import copyfile
@@ -52,11 +54,11 @@ if __name__ == "__main__":
                     np.dot(
                         pose_graph_global.nodes[fragment_id].pose,
                         pose_graph_fragments[fragment_id].nodes[local_frame_id].
-                        pose)))
+                            pose)))
             copyfile(depth_image_path[i], os.path.join(out_path, "depth/", \
-                    os.path.basename(depth_image_path[i])))
+                                                       os.path.basename(depth_image_path[i])))
             copyfile(color_image_path[i], os.path.join(out_path, "image/", \
-                    os.path.basename(color_image_path[i])))
+                                                       os.path.basename(color_image_path[i])))
             cnt += 1
     copyfile(os.path.join(path, "/scene/cropped.ply"),
              os.path.join(out_path, "/scene/integrated.ply"))

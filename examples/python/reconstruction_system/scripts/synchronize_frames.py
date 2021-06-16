@@ -9,8 +9,11 @@ import os
 import sys
 import shutil
 import argparse
+
 sys.path.append("../../utility")
 from file import *
+
+
 # original code is written by Andrew. W. Chen
 # input: openni style unsynchronized color and depth images
 # output: synchronized color and depth images
@@ -46,7 +49,7 @@ def run_synchronization(args):
         best_dist = float('inf')
         while depth_idx <= len(depth_files) - 1 and i <= len(color_files) - 1:
             dist = math.fabs(timestamps['depth'][depth_idx] - \
-                    timestamps['color'][i])
+                             timestamps['color'][i])
             if dist > best_dist:
                 break
             best_dist = dist

@@ -6,6 +6,7 @@
 
 import open3d as o3d
 import sys
+
 sys.path.append("../utility")
 from file import join
 
@@ -37,9 +38,9 @@ def optimize_posegraph_for_fragment(path_dataset, fragment_id, config):
         path_dataset,
         config["template_fragment_posegraph_optimized"] % fragment_id)
     run_posegraph_optimization(pose_graph_name, pose_graph_optimized_name,
-            max_correspondence_distance = config["max_depth_diff"],
-            preference_loop_closure = \
-            config["preference_loop_closure_odometry"])
+                               max_correspondence_distance=config["max_depth_diff"],
+                               preference_loop_closure= \
+                                   config["preference_loop_closure_odometry"])
 
 
 def optimize_posegraph_for_scene(path_dataset, config):
@@ -47,9 +48,9 @@ def optimize_posegraph_for_scene(path_dataset, config):
     pose_graph_optimized_name = join(
         path_dataset, config["template_global_posegraph_optimized"])
     run_posegraph_optimization(pose_graph_name, pose_graph_optimized_name,
-            max_correspondence_distance = config["voxel_size"] * 1.4,
-            preference_loop_closure = \
-            config["preference_loop_closure_registration"])
+                               max_correspondence_distance=config["voxel_size"] * 1.4,
+                               preference_loop_closure= \
+                                   config["preference_loop_closure_registration"])
 
 
 def optimize_posegraph_for_refined_scene(path_dataset, config):
@@ -57,6 +58,6 @@ def optimize_posegraph_for_refined_scene(path_dataset, config):
     pose_graph_optimized_name = join(
         path_dataset, config["template_refined_posegraph_optimized"])
     run_posegraph_optimization(pose_graph_name, pose_graph_optimized_name,
-            max_correspondence_distance = config["voxel_size"] * 1.4,
-            preference_loop_closure = \
-            config["preference_loop_closure_registration"])
+                               max_correspondence_distance=config["voxel_size"] * 1.4,
+                               preference_loop_closure= \
+                                   config["preference_loop_closure_registration"])

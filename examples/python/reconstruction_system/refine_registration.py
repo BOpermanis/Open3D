@@ -7,9 +7,11 @@
 import numpy as np
 import open3d as o3d
 import sys
+
 sys.path.append("../utility")
 from file import join, get_file_list, write_poses_to_log
 from visualization import draw_registration_result_original_color
+
 sys.path.append(".")
 from optimize_posegraph import optimize_posegraph_for_refined_scene
 
@@ -61,18 +63,18 @@ def multiscale_icp(source,
         else:
             source_down.estimate_normals(
                 o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
-                                                     2.0,
+                                                            2.0,
                                                      max_nn=30))
             target_down.estimate_normals(
                 o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size[scale] *
-                                                     2.0,
+                                                            2.0,
                                                      max_nn=30))
             if config["icp_method"] == "point_to_plane":
                 result_icp = o3d.pipelines.registration.registration_icp(
                     source_down, target_down, distance_threshold,
                     current_transformation,
                     o3d.pipelines.registration.
-                    TransformationEstimationPointToPlane(),
+                        TransformationEstimationPointToPlane(),
                     o3d.pipelines.registration.ICPConvergenceCriteria(
                         max_iteration=iter))
             if config["icp_method"] == "color":
@@ -80,7 +82,7 @@ def multiscale_icp(source,
                     source_down, target_down, distance_threshold,
                     current_transformation,
                     o3d.pipelines.registration.
-                    TransformationEstimationForColoredICP(),
+                        TransformationEstimationForColoredICP(),
                     o3d.pipelines.registration.ICPConvergenceCriteria(
                         relative_fitness=1e-6,
                         relative_rmse=1e-6,
@@ -97,9 +99,9 @@ def multiscale_icp(source,
 def local_refinement(source, target, transformation_init, config):
     voxel_size = config["voxel_size"]
     (transformation, information) = \
-            multiscale_icp(
+        multiscale_icp(
             source, target,
-            [voxel_size, voxel_size/2.0, voxel_size/4.0], [50, 30, 14],
+            [voxel_size, voxel_size / 2.0, voxel_size / 4.0], [50, 30, 14],
             config, transformation_init)
     return (transformation, information)
 
@@ -168,10 +170,10 @@ def make_posegraph_for_refined_scene(ply_file_names, config):
     else:
         for r in matching_results:
             (matching_results[r].transformation,
-                    matching_results[r].information) = \
-                    register_point_cloud_pair(ply_file_names,
-                    matching_results[r].s, matching_results[r].t,
-                    matching_results[r].transformation, config)
+             matching_results[r].information) = \
+                register_point_cloud_pair(ply_file_names,
+                                          matching_results[r].s, matching_results[r].t,
+                                          matching_results[r].transformation, config)
 
     pose_graph_new = o3d.pipelines.registration.PoseGraph()
     odometry = np.identity(4)
@@ -209,7 +211,7 @@ def run(config):
                  config["template_fragment_posegraph_optimized"] % fragment_id))
         for frame_id in range(len(pose_graph_rgbd.nodes)):
             frame_id_abs = fragment_id * \
-                    config['n_frames_per_fragment'] + frame_id
+                           config['n_frames_per_fragment'] + frame_id
             pose = np.dot(pose_graph_fragment.nodes[fragment_id].pose,
                           pose_graph_rgbd.nodes[frame_id].pose)
             poses.append(pose)

@@ -66,7 +66,7 @@ if __name__ == "__main__":
     o3d.utility.set_verbosity_level(o3d.utility.Debug)
 
     for mesh, constraint_ids, constraint_pos in [
-            problem0(), problem1(), problem2()
+        problem0(), problem1(), problem2()
     ]:
         constraint_ids = np.array(constraint_ids, dtype=np.int32)
         constraint_pos = o3d.utility.Vector3dVector(constraint_pos)

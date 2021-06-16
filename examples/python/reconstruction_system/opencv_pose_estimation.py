@@ -24,6 +24,7 @@ def pose_estimation(source_rgbd_image, target_rgbd_image,
 
     # transform double array to unit8 array
     color_cv_s = np.uint8(np.asarray(source_rgbd_image.color) * 255.0)
+    print(color_cv_s.shape)
     color_cv_t = np.uint8(np.asarray(target_rgbd_image.color) * 255.0)
 
     orb = cv2.ORB_create(scaleFactor=1.2,
@@ -173,13 +174,13 @@ def estimate_3D_transform_RANSAC(pts_xyz_s, pts_xyz_t):
         # note: diag(R_approx) > 0 prevents ankward transformation between
         # RGBD pair of relatively small amount of baseline.
         if (n_inlier > max_inlier) and (np.linalg.det(R_approx) != 0.0) and \
-                (R_approx[0,0] > 0 and R_approx[1,1] > 0 and R_approx[2,2] > 0):
+                (R_approx[0, 0] > 0 and R_approx[1, 1] > 0 and R_approx[2, 2] > 0):
             Transform_good[:3, :3] = R_approx
             Transform_good[:3, 3] = [t_approx[0], t_approx[1], t_approx[2]]
             max_inlier = n_inlier
             inlier_vec = [id_iter for diff_iter, id_iter \
-                    in zip(diff, range(n_points)) \
-                    if diff_iter < max_distance]
+                          in zip(diff, range(n_points)) \
+                          if diff_iter < max_distance]
             inlier_vec_good = inlier_vec
             success = True
 

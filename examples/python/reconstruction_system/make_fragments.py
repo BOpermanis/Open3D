@@ -8,9 +8,11 @@ import math
 import sys
 import numpy as np
 import open3d as o3d
+import cv2
 sys.path.append("../utility")
 from file import join, make_clean_folder, get_rgbd_file_lists
 from opencv import initialize_opencv
+
 sys.path.append(".")
 from optimize_posegraph import optimize_posegraph_for_fragment
 
@@ -20,9 +22,22 @@ if with_opencv:
     from opencv_pose_estimation import pose_estimation
 
 
-def read_rgbd_image(color_file, depth_file, convert_rgb_to_intensity, config):
+def read_rgbd_image(color_file, depth_file, convert_rgb_to_intensity, config, r=1.0):
     color = o3d.io.read_image(color_file)
     depth = o3d.io.read_image(depth_file)
+
+    if r != 1.0:
+        color = np.asarray(color)
+        depth = np.asarray(depth)
+        h, w = map(lambda x: int(x * r), color.shape[:2])
+        color = cv2.resize(color, (w, h))
+        depth = cv2.resize(depth, (w, h))
+        color = o3d.cpu.pybind.geometry.Image(color)
+        depth = o3d.cpu.pybind.geometry.Image(depth)
+        # exit()
+
+    # print(color)
+    # exit()
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
         color,
         depth,
@@ -30,6 +45,9 @@ def read_rgbd_image(color_file, depth_file, convert_rgb_to_intensity, config):
         depth_trunc=config["max_depth"],
         convert_rgb_to_intensity=convert_rgb_to_intensity)
     return rgbd_image
+
+
+
 
 
 def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
@@ -48,7 +66,7 @@ def register_one_rgbd_pair(s, t, color_files, depth_files, intrinsic,
                                                     intrinsic, False)
             if success_5pt:
                 [success, trans, info
-                ] = o3d.pipelines.odometry.compute_rgbd_odometry(
+                 ] = o3d.pipelines.odometry.compute_rgbd_odometry(
                     source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
                     o3d.pipelines.odometry.RGBDOdometryJacobianFromHybridTerm(),
                     option)
@@ -161,14 +179,15 @@ def process_single_fragment(fragment_id, color_files, depth_files, n_files,
     make_posegraph_for_fragment(config["path_dataset"], sid, eid, color_files,
                                 depth_files, fragment_id, n_fragments,
                                 intrinsic, with_opencv, config)
+
     optimize_posegraph_for_fragment(config["path_dataset"], fragment_id, config)
+
     make_pointcloud_for_fragment(config["path_dataset"], color_files,
                                  depth_files, fragment_id, n_fragments,
                                  intrinsic, config)
 
 
 def run(config):
-
     print("making fragments from RGBD sequence.")
     make_clean_folder(join(config["path_dataset"], config["folder_fragment"]))
 

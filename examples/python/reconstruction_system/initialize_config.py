@@ -6,6 +6,8 @@
 
 import os
 import sys
+from os.path import join
+
 sys.path.append("../utility")
 from file import check_folder_structure, extract_rgbd_frames
 
@@ -16,7 +18,6 @@ def set_default_value(config, key, value):
 
 
 def initialize_config(config):
-
     # set default parameters if not specified
     set_default_value(config, "depth_map_type", "redwood")
     set_default_value(config, "n_frames_per_fragment", 100)
@@ -70,6 +71,7 @@ def initialize_config(config):
                       "scene/refined_registration_optimized.json")
     set_default_value(config, "template_global_mesh", "scene/integrated.ply")
     set_default_value(config, "template_global_traj", "scene/trajectory.log")
+
 
     if config["path_dataset"].endswith(".bag"):
         assert os.path.isfile(config["path_dataset"]), (

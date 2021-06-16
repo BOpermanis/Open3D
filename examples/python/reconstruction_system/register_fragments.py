@@ -7,9 +7,11 @@
 import numpy as np
 import open3d as o3d
 import sys
+
 sys.path.append("../utility")
 from file import join, get_file_list, make_clean_folder
 from visualization import draw_registration_result
+
 sys.path.append(".")
 from optimize_posegraph import optimize_posegraph_for_scene
 from refine_registration import multiscale_icp
@@ -42,7 +44,7 @@ def register_point_cloud_fpfh(source, target, source_fpfh, target_fpfh, config):
                 False), 3,
             [
                 o3d.pipelines.registration.
-                CorrespondenceCheckerBasedOnEdgeLength(0.9),
+                    CorrespondenceCheckerBasedOnEdgeLength(0.9),
                 o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
                     distance_threshold)
             ],
@@ -59,7 +61,6 @@ def register_point_cloud_fpfh(source, target, source_fpfh, target_fpfh, config):
 
 def compute_initial_registration(s, t, source_down, target_down, source_fpfh,
                                  target_fpfh, path_dataset, config):
-
     if t == s + 1:  # odometry case
         print("Using RGBD odometry")
         pose_graph_frag = o3d.io.read_pose_graph(
@@ -69,8 +70,8 @@ def compute_initial_registration(s, t, source_down, target_down, source_fpfh,
         transformation_init = np.linalg.inv(pose_graph_frag.nodes[n_nodes -
                                                                   1].pose)
         (transformation, information) = \
-                multiscale_icp(source_down, target_down,
-                [config["voxel_size"]], [50], config, transformation_init)
+            multiscale_icp(source_down, target_down,
+                           [config["voxel_size"]], [50], config, transformation_init)
     else:  # loop closure case
         (success, transformation,
          information) = register_point_cloud_fpfh(source_down, target_down,
@@ -117,7 +118,7 @@ def register_point_cloud_pair(ply_file_names, s, t, config):
     (source_down, source_fpfh) = preprocess_point_cloud(source, config)
     (target_down, target_fpfh) = preprocess_point_cloud(target, config)
     (success, transformation, information) = \
-            compute_initial_registration(
+        compute_initial_registration(
             s, t, source_down, target_down,
             source_fpfh, target_fpfh, config["path_dataset"], config)
     if t != s + 1 and not success:
@@ -167,9 +168,9 @@ def make_posegraph_for_scene(ply_file_names, config):
     else:
         for r in matching_results:
             (matching_results[r].success, matching_results[r].transformation,
-                    matching_results[r].information) = \
-                    register_point_cloud_pair(ply_file_names,
-                    matching_results[r].s, matching_results[r].t, config)
+             matching_results[r].information) = \
+                register_point_cloud_pair(ply_file_names,
+                                          matching_results[r].s, matching_results[r].t, config)
 
     for r in matching_results:
         if matching_results[r].success:

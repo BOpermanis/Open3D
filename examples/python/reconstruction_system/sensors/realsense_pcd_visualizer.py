@@ -31,12 +31,13 @@ def get_intrinsic_matrix(frame):
     return out
 
 
+# this is very usefull
 if __name__ == "__main__":
 
     # Create a pipeline
     pipeline = rs.pipeline()
 
-    #Create a config and configure the pipeline to stream
+    # Create a config and configure the pipeline to stream
     #  different resolutions of color and depth streams
     config = rs.config()
 

@@ -15,11 +15,11 @@ MODE_COMMON_HANYU_EN = "hanyu_en+common"
 MODE_ALL_HANYU = "all"
 MODE_CUSTOM_CHARS = "custom"
 
-#mode = MODE_SERIF
-#mode = MODE_COMMON_HANYU
+# mode = MODE_SERIF
+# mode = MODE_COMMON_HANYU
 mode = MODE_SERIF_AND_COMMON_HANYU
-#mode = MODE_ALL_HANYU
-#mode = MODE_CUSTOM_CHARS
+# mode = MODE_ALL_HANYU
+# mode = MODE_CUSTOM_CHARS
 
 # Fonts can be names or paths
 if platform.system() == "Darwin":

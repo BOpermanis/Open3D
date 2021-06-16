@@ -32,4 +32,4 @@ if __name__ == "__main__":
     num_good = sum(pt_dis < 0.075)
     print(
         "{:.2f}% points in source pointcloud successfully found their correspondence."
-        .format(num_good * 100.0 / len(pcd_source.points)))
+            .format(num_good * 100.0 / len(pcd_source.points)))

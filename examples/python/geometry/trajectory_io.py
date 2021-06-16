@@ -15,7 +15,7 @@ class CameraPose:
 
     def __str__(self):
         return 'Metadata : ' + ' '.join(map(str, self.metadata)) + '\n' + \
-            "Pose : " + "\n" + np.array_str(self.pose)
+               "Pose : " + "\n" + np.array_str(self.pose)
 
 
 def read_trajectory(filename):

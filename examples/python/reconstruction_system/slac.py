@@ -7,6 +7,7 @@
 import numpy as np
 import open3d as o3d
 import sys
+
 sys.path.append("../utility")
 from file import join, get_file_list, write_poses_to_log
 
@@ -25,7 +26,7 @@ def run(config):
     if (len(ply_file_names) == 0):
         raise RuntimeError(
             "No fragment found in {}, please make sure the reconstruction_system has finished running on the dataset."
-            .format(join(config["path_dataset"], config["folder_fragment"])))
+                .format(join(config["path_dataset"], config["folder_fragment"])))
 
     pose_graph_fragment = o3d.io.read_pose_graph(
         join(path_dataset, config["template_refined_posegraph_optimized"]))
@@ -68,7 +69,7 @@ def run(config):
     else:
         raise RuntimeError(
             "Requested optimization method {}, is not implemented. Implemented methods includes slac and rigid."
-            .format(config["method"]))
+                .format(config["method"]))
 
     # Write updated pose graph.
     o3d.io.write_pose_graph(

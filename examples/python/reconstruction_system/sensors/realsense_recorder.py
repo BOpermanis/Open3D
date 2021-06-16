@@ -47,20 +47,14 @@ def make_clean_folder(path_folder):
 def save_intrinsic_as_json(filename, frame):
     intrinsics = frame.profile.as_video_stream_profile().intrinsics
     with open(filename, 'w') as outfile:
-        obj = json.dump(
-            {
-                'width':
-                    intrinsics.width,
-                'height':
-                    intrinsics.height,
-                'intrinsic_matrix': [
-                    intrinsics.fx, 0, 0, 0, intrinsics.fy, 0, intrinsics.ppx,
-                    intrinsics.ppy, 1
-                ]
-            },
-            outfile,
-            indent=4)
+        obj = json.dump({
+            'width': intrinsics.width,
+            'height': intrinsics.height,
+            'intrinsic_matrix': [intrinsics.fx, 0, 0, 0, intrinsics.fy, 0, intrinsics.ppx,intrinsics.ppy, 1]
+        },outfile,indent=4)
 
+
+from os.path import join
 
 if __name__ == "__main__":
 
@@ -68,9 +62,9 @@ if __name__ == "__main__":
         description=
         "Realsense Recorder. Please select one of the optional arguments")
     parser.add_argument("--output_folder",
-                        default='../dataset/realsense/',
+                        default=join("C:\\", "Users", "bruno", "data", "from_realsense", "test1"),
                         help="set output folder")
-    parser.add_argument("--record_rosbag",
+    parser.add_argument("--record_rosbag", default=True,
                         action='store_true',
                         help="Recording rgbd stream into realsense.bag")
     parser.add_argument(
@@ -104,7 +98,7 @@ if __name__ == "__main__":
     # Create a pipeline
     pipeline = rs.pipeline()
 
-    #Create a config and configure the pipeline to stream
+    # Create a config and configure the pipeline to stream
     #  different resolutions of color and depth streams
     config = rs.config()
 
@@ -167,18 +161,18 @@ if __name__ == "__main__":
                         join(args.output_folder, "camera_intrinsic.json"),
                         color_frame)
                 cv2.imwrite("%s/%06d.png" % \
-                        (path_depth, frame_count), depth_image)
+                            (path_depth, frame_count), depth_image)
                 cv2.imwrite("%s/%06d.jpg" % \
-                        (path_color, frame_count), color_image)
+                            (path_color, frame_count), color_image)
                 print("Saved color + depth image %06d" % frame_count)
                 frame_count += 1
 
             # Remove background - Set pixels further than clipping_distance to grey
             grey_color = 153
-            #depth image is 1 channel, color is 3 channels
+            # depth image is 1 channel, color is 3 channels
             depth_image_3d = np.dstack((depth_image, depth_image, depth_image))
             bg_removed = np.where((depth_image_3d > clipping_distance) | \
-                    (depth_image_3d <= 0), grey_color, color_image)
+                                  (depth_image_3d <= 0), grey_color, color_image)
 
             # Render images
             depth_colormap = cv2.applyColorMap(

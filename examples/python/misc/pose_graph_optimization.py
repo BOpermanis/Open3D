@@ -8,7 +8,6 @@ import open3d as o3d
 import numpy as np
 
 if __name__ == "__main__":
-
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
 
     print("")
