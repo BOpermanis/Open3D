@@ -16,7 +16,7 @@ import open3d as o3d
 sys.path.append("../utility")
 from file import check_folder_structure
 from os.path import join
-
+from pprint import pprint
 sys.path.append(".")
 
 config_path = join("C:\\", "Users", "bruno", "repos", "IR3D", "rsconfig.json")
@@ -77,6 +77,9 @@ if __name__ == "__main__":
             initialize_config(config)
             check_folder_structure(config["path_dataset"])
     assert config is not None
+
+    # pprint(config)
+    # exit()
 
     if args.debug_mode:
         config['debug_mode'] = True

@@ -22,28 +22,32 @@ if with_opencv:
     from opencv_pose_estimation import pose_estimation
 
 
+def change_resolution(rgbd, w=None, h=None, r=None):
+    color = np.asarray(rgbd.color)
+    depth = np.asarray(rgbd.depth)
+    if w is None:
+        h, w = map(lambda x: int(x * r), color.shape[:2])
+    color = cv2.resize(color, (w, h), interpolation=cv2.INTER_LINEAR)
+    depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_LINEAR)
+    color = o3d.cpu.pybind.geometry.Image(color)
+    depth = o3d.cpu.pybind.geometry.Image(depth)
+    rgbd.color = color
+    rgbd.depth = depth
+
+
 def read_rgbd_image(color_file, depth_file, convert_rgb_to_intensity, config, r=1.0):
     color = o3d.io.read_image(color_file)
     depth = o3d.io.read_image(depth_file)
 
-    if r != 1.0:
-        color = np.asarray(color)
-        depth = np.asarray(depth)
-        h, w = map(lambda x: int(x * r), color.shape[:2])
-        color = cv2.resize(color, (w, h))
-        depth = cv2.resize(depth, (w, h))
-        color = o3d.cpu.pybind.geometry.Image(color)
-        depth = o3d.cpu.pybind.geometry.Image(depth)
-        # exit()
-
-    # print(color)
-    # exit()
     rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
         color,
         depth,
         depth_scale=config["depth_scale"],
         depth_trunc=config["max_depth"],
         convert_rgb_to_intensity=convert_rgb_to_intensity)
+
+    if r != 1.0:
+        change_resolution(rgbd_image, r=r)
     return rgbd_image
 
 

@@ -24,7 +24,6 @@ def pose_estimation(source_rgbd_image, target_rgbd_image,
 
     # transform double array to unit8 array
     color_cv_s = np.uint8(np.asarray(source_rgbd_image.color) * 255.0)
-    print(color_cv_s.shape)
     color_cv_t = np.uint8(np.asarray(target_rgbd_image.color) * 255.0)
 
     orb = cv2.ORB_create(scaleFactor=1.2,
