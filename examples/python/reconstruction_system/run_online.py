@@ -55,10 +55,10 @@ intrinsic = o3d.io.read_pinhole_camera_intrinsic(
     config["path_intrinsic"])
 
 
-def get_mask_visible(rgbd, T):
+def get_mask_visible(rgbd, T_frame, T_camera_inv):
     global height, width
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
-    pcd = pcd.transform(T)
+    pcd = pcd.transform(np.matmul(T_camera_inv, T_frame))
     pcd = np.asarray(pcd.points)
 
     pcd2 = np.dot(intrinsic.intrinsic_matrix, pcd.T).T
@@ -101,8 +101,9 @@ def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
 
     if np.asarray(pcd0.points).shape[0] < 20:
         return
+    T_camera_inv = np.linalg.inv(trans)
     for source_id, rgbd in list_local_map:
-        mask = get_mask_visible(rgbd, trans)
+        mask = get_mask_visible(rgbd, pose_graph.nodes[source_id].pose, T_camera_inv)
         if np.average(mask) > tresh_covisibility:
             pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
             if np.asarray(pcd.points).shape[0] < 20:
@@ -122,9 +123,10 @@ color_files, depth_files = sorted(glob(join(path_rgb, "*.jpg"))), sorted(glob(jo
 
 
 voxel_size = 0.05
-num_use = 200
+nr_start = 300
+nr_end = 500
 tresh_covisibility = 0.7
-n_local_map = 2
+n_local_map = 5
 max_correspondence_distance_coarse = voxel_size * 15
 max_correspondence_distance_fine = voxel_size * 1.5
 rgbd_prev = None
@@ -139,7 +141,8 @@ pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.eye(4)))
 
 T_cumulative = np.eye(4)
 rgbd = None
-for nr_frame, (f1, f2) in enumerate(zip(color_files[:num_use], depth_files[:num_use])):
+for nr_frame, (f1, f2) in enumerate(zip(color_files[nr_start:nr_end], depth_files[nr_start:nr_end])):
+    print(nr_frame)
     rgbd = read_rgbd_image(f1, f2, True, config)
     change_resolution(rgbd, r=r)
     # print(111111111111, np.asarray(rgbd.depth).shape, np.sum(np.asarray(rgbd.depth)))
@@ -151,54 +154,54 @@ for nr_frame, (f1, f2) in enumerate(zip(color_files[:num_use], depth_files[:num_
         #                                                                     intrinsic, True, config,
         #                                                                    flag_not_close=True))
 
-        (trans, _), t = get_time(lambda: pairwise_registration(rgbd_prev, rgbd))
+        (trans, _), t = get_time(lambda: pairwise_registration(rgbd, rgbd_prev) )
         if trans is None:
             continue
         # trans = np.eye(4)
         # trans[:3,3] = nr_frame
-        T_cumulative = np.matmul(T_cumulative, np.linalg.inv(trans))
-        # T_cumulative = np.matmul(np.linalg.inv(trans),  T_cumulative)
+        T_cumulative = np.matmul(T_cumulative, trans)
+        # T_cumulative1 = np.matmul(np.linalg.inv(trans),  T_cumulative)
+        # print(np.sum(T_cumulative - T_cumulative1))
         # print(111111111111111111111111111111111)
         # print(T_cumulative)
-        # find_local_rgbs(rgbds[-n_local_map:], trans, pose_graph, rgbd, len(rgbds))
+        find_local_rgbs(rgbds[-n_local_map:], T_cumulative, pose_graph, rgbd, len(rgbds))
         ts.append(ts[-1] + trans[:3, 3])
 
         # pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(T_cumulative)))
         pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(T_cumulative))
 
-    # print(type(rgbd))
-    # exit()
     rgbds.append((len(rgbds), rgbd))
 
-    if cloud is None:
-        cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
-    else:
-        cloud += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic).transform(T_cumulative)
-    # print(intrinsic.intrinsic_matrix)
+    # if cloud is None:
+    #     cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
+    # else:
+    #     cloud += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic).transform(T_cumulative)
     # cloud = cloud.voxel_down_sample(voxel_size)
     rgbd_prev = rgbd
 
-# print("Optimizing PoseGraph ...")
-# option = o3d.pipelines.registration.GlobalOptimizationOption(
-#     max_correspondence_distance=max_correspondence_distance_fine,
-#     edge_prune_threshold=0.25,
-#     reference_node=0)
-# with o3d.utility.VerbosityContextManager(
-#         o3d.utility.VerbosityLevel.Debug) as cm:
-#     o3d.pipelines.registration.global_optimization(
-#         pose_graph,
-#         o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
-#         o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
-#         option)
+print("Optimizing PoseGraph ...")
+option = o3d.pipelines.registration.GlobalOptimizationOption(
+    max_correspondence_distance=max_correspondence_distance_fine,
+    edge_prune_threshold=0.25,
+    reference_node=0)
+with o3d.utility.VerbosityContextManager(
+        o3d.utility.VerbosityLevel.Debug) as cm:
+    o3d.pipelines.registration.global_optimization(
+        pose_graph,
+        o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
+        o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
+        option)
 
 
-# clouds = []
-# np_cloud = []
-# for id_rgbd, rgbd in rgbds:
-#     clouds.append(o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic))
-#     clouds[-1].transform(pose_graph.nodes[id_rgbd].pose)
-#     clouds[-1] = clouds[-1].voxel_down_sample(voxel_size)
-#     np_cloud.append(np.asarray(clouds[-1].points))
-# np_cloud = np.concatenate(np_cloud)
+clouds = []
+np_cloud = []
+for id_rgbd, rgbd in rgbds:
+    clouds.append(o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic))
+    clouds[-1].transform(pose_graph.nodes[id_rgbd].pose)
+    clouds[-1] = clouds[-1].voxel_down_sample(voxel_size)
+    np_cloud.append(np.asarray(clouds[-1].points))
+np_cloud = np.concatenate(np_cloud)
 
-o3d.visualization.draw_geometries([cloud])
+print("len(clouds)", len(clouds))
+o3d.visualization.draw_geometries(clouds)
+# o3d.visualization.draw_geometries([cloud])
