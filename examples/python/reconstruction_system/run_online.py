@@ -13,9 +13,13 @@ from initialize_config import initialize_config
 
 
 def pairwise_registration(source, target):
+    if isinstance(source, o3d.cpu.pybind.geometry.RGBDImage):
+        source = o3d.geometry.PointCloud.create_from_rgbd_image(source, intrinsic)
+        target = o3d.geometry.PointCloud.create_from_rgbd_image(target, intrinsic)
+
+    if np.asarray(target.points).shape[0] < 20:
+        return None, None
     target.estimate_normals()
-    # print(target.has_normals())
-    # exit()
     icp_coarse = o3d.pipelines.registration.registration_icp(
         source, target, max_correspondence_distance_coarse, np.identity(4),
         o3d.pipelines.registration.TransformationEstimationPointToPlane())
@@ -38,13 +42,18 @@ def get_time(fun):
 
 path_rgb = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "color")
 path_depth = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "depth")
-path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic.json")
+
+# path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_100p.json"); r = 1.0
+path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_25p.json"); r = 0.25
+
+
 path_dataset = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense.bag")
 config = {"path_dataset": "nothing", "path_intrinsic": path_intrinsic}
 initialize_config(config)
 
 intrinsic = o3d.io.read_pinhole_camera_intrinsic(
     config["path_intrinsic"])
+
 
 def get_mask_visible(rgbd, T):
     global height, width
@@ -108,13 +117,14 @@ def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
                                                          uncertain=True)
             )
 
+
 color_files, depth_files = sorted(glob(join(path_rgb, "*.jpg"))), sorted(glob(join(path_depth, "*.png")))
 
-r = 0.25
-voxel_size = 0.01
-num_use = 20
+
+voxel_size = 0.05
+num_use = 200
 tresh_covisibility = 0.7
-n_local_map = 10
+n_local_map = 2
 max_correspondence_distance_coarse = voxel_size * 15
 max_correspondence_distance_fine = voxel_size * 1.5
 rgbd_prev = None
@@ -123,56 +133,72 @@ height, width = None, None
 
 ts = [np.zeros((3,))]
 rgbds = []
+cloud = None
 pose_graph = o3d.pipelines.registration.PoseGraph()
 pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.eye(4)))
 
+T_cumulative = np.eye(4)
+rgbd = None
 for nr_frame, (f1, f2) in enumerate(zip(color_files[:num_use], depth_files[:num_use])):
     rgbd = read_rgbd_image(f1, f2, True, config)
     change_resolution(rgbd, r=r)
+    # print(111111111111, np.asarray(rgbd.depth).shape, np.sum(np.asarray(rgbd.depth)))
     if height is None:
         height, width = np.asarray(rgbd.color).shape[:2]
-    # get_mask_visible(rgbd, np.eye(4))
-    if rgbd_prev is not None:
-        (success, trans, info), t = get_time(lambda: register_one_rgbd_pair(rgbd, rgbd_prev,
-                                                                            intrinsic, True, config,
-                                                                           flag_not_close=False))
 
-        find_local_rgbs(rgbds[-n_local_map:], trans, pose_graph, rgbd, len(rgbds))
+    if rgbd_prev is not None:
+        # (success, trans, info), t = get_time(lambda: register_one_rgbd_pair(rgbd_prev, rgbd,
+        #                                                                     intrinsic, True, config,
+        #                                                                    flag_not_close=True))
+
+        (trans, _), t = get_time(lambda: pairwise_registration(rgbd_prev, rgbd))
+        if trans is None:
+            continue
+        # trans = np.eye(4)
+        # trans[:3,3] = nr_frame
+        T_cumulative = np.matmul(T_cumulative, np.linalg.inv(trans))
+        # T_cumulative = np.matmul(np.linalg.inv(trans),  T_cumulative)
+        # print(111111111111111111111111111111111)
+        # print(T_cumulative)
+        # find_local_rgbs(rgbds[-n_local_map:], trans, pose_graph, rgbd, len(rgbds))
         ts.append(ts[-1] + trans[:3, 3])
 
-        pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(trans)))
+        # pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(T_cumulative)))
+        pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(T_cumulative))
 
+    # print(type(rgbd))
+    # exit()
     rgbds.append((len(rgbds), rgbd))
+
+    if cloud is None:
+        cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
+    else:
+        cloud += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic).transform(T_cumulative)
+    # print(intrinsic.intrinsic_matrix)
+    # cloud = cloud.voxel_down_sample(voxel_size)
     rgbd_prev = rgbd
 
-# print(pose_graph.edges)
+# print("Optimizing PoseGraph ...")
+# option = o3d.pipelines.registration.GlobalOptimizationOption(
+#     max_correspondence_distance=max_correspondence_distance_fine,
+#     edge_prune_threshold=0.25,
+#     reference_node=0)
+# with o3d.utility.VerbosityContextManager(
+#         o3d.utility.VerbosityLevel.Debug) as cm:
+#     o3d.pipelines.registration.global_optimization(
+#         pose_graph,
+#         o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
+#         o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
+#         option)
 
-print("Optimizing PoseGraph ...")
-option = o3d.pipelines.registration.GlobalOptimizationOption(
-    max_correspondence_distance=max_correspondence_distance_fine,
-    edge_prune_threshold=0.25,
-    reference_node=0)
-with o3d.utility.VerbosityContextManager(
-        o3d.utility.VerbosityLevel.Debug) as cm:
-    o3d.pipelines.registration.global_optimization(
-        pose_graph,
-        o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
-        o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
-        option)
-exit()
-ts = np.asarray(ts)
-print(ts.shape)
 
-m, M = np.min(ts), np.max(ts)
+# clouds = []
+# np_cloud = []
+# for id_rgbd, rgbd in rgbds:
+#     clouds.append(o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic))
+#     clouds[-1].transform(pose_graph.nodes[id_rgbd].pose)
+#     clouds[-1] = clouds[-1].voxel_down_sample(voxel_size)
+#     np_cloud.append(np.asarray(clouds[-1].points))
+# np_cloud = np.concatenate(np_cloud)
 
-import matplotlib.pyplot as plt
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-# pprint(dir(ax))
-ax.set_xlim(m, M)
-ax.set_ylim(m, M)
-ax.set_zlim(m, M)
-# ax.scatter(mapper.point_cloud_cumulative[:, 0], mapper.point_cloud_cumulative[:, 1],
-#            mapper.point_cloud_cumulative[:, 2], s=1)
-ax.plot(ts[:, 0], ts[:, 1], ts[:, 2], c="red")
-plt.show()
+o3d.visualization.draw_geometries([cloud])

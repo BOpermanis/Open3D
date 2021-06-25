@@ -28,7 +28,9 @@ def change_resolution(rgbd, w=None, h=None, r=None):
     if w is None:
         h, w = map(lambda x: int(x * r), color.shape[:2])
     color = cv2.resize(color, (w, h), interpolation=cv2.INTER_LINEAR)
-    depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_LINEAR)
+    # m, M = np.min(depth), np.max(depth)
+    depth = cv2.resize(depth, (w, h), interpolation=cv2.INTER_NEAREST)
+    # depth[np.logical_or(depth<m, depth>M)] = 0
     color = o3d.cpu.pybind.geometry.Image(color)
     depth = o3d.cpu.pybind.geometry.Image(depth)
     rgbd.color = color
