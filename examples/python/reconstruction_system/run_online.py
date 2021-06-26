@@ -55,11 +55,12 @@ intrinsic = o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"])
 
 
 def get_mask_visible(rgbd, T_frame, T_camera_inv, flag_testing=False):
+    global height, width
     if flag_testing:
         height, width = 120, 160
         pcd = rgbd
     else:
-        global height, width
+
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
         pcd = pcd.transform(np.matmul(T_frame, T_camera_inv))
         pcd = np.asarray(pcd.points)
