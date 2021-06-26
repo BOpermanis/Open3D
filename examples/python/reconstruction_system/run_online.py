@@ -51,15 +51,18 @@ path_dataset = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1",
 config = {"path_dataset": "nothing", "path_intrinsic": path_intrinsic}
 initialize_config(config)
 
-intrinsic = o3d.io.read_pinhole_camera_intrinsic(
-    config["path_intrinsic"])
+intrinsic = o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"])
 
 
-def get_mask_visible(rgbd, T_frame, T_camera_inv):
-    global height, width
-    pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
-    pcd = pcd.transform(np.matmul(T_camera_inv, T_frame))
-    pcd = np.asarray(pcd.points)
+def get_mask_visible(rgbd, T_frame, T_camera_inv, flag_testing=False):
+    if flag_testing:
+        height, width = 120, 160
+        pcd = rgbd
+    else:
+        global height, width
+        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
+        pcd = pcd.transform(np.matmul(T_frame, T_camera_inv))
+        pcd = np.asarray(pcd.points)
 
     pcd2 = np.dot(intrinsic.intrinsic_matrix, pcd.T).T
     pcd2[:, 0] /= pcd2[:, 2]
@@ -71,31 +74,6 @@ def get_mask_visible(rgbd, T_frame, T_camera_inv):
         np.logical_and(0 <= pcd2[:, 1], pcd2[:, 1] <= height))
 
 
-def register_one_rgbd_pair(source_rgbd_image, target_rgbd_image, intrinsic, with_opencv, config, flag_not_close=False):
-
-    option = o3d.pipelines.odometry.OdometryOption()
-    option.max_depth_diff = config["max_depth_diff"]
-    if flag_not_close:
-        if with_opencv:
-            success_5pt, odo_init = pose_estimation(source_rgbd_image,
-                                                    target_rgbd_image,
-                                                    intrinsic, False)
-            if success_5pt:
-                [success, trans, info
-                 ] = o3d.pipelines.odometry.compute_rgbd_odometry(
-                    source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
-                    o3d.pipelines.odometry.RGBDOdometryJacobianFromHybridTerm(),
-                    option)
-                return [success, trans, info]
-        return [False, np.identity(4), np.identity(6)]
-    else:
-        odo_init = np.identity(4)
-        [success, trans, info] = o3d.pipelines.odometry.compute_rgbd_odometry(
-            source_rgbd_image, target_rgbd_image, intrinsic, odo_init,
-            o3d.pipelines.odometry.RGBDOdometryJacobianFromHybridTerm(), option)
-        return [success, trans, info]
-
-
 def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
     pcd0 = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd0, intrinsic)
 
@@ -104,6 +82,7 @@ def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
     T_camera_inv = np.linalg.inv(trans)
     for source_id, rgbd in list_local_map:
         mask = get_mask_visible(rgbd, pose_graph.nodes[source_id].pose, T_camera_inv)
+        print(np.average(mask))
         if np.average(mask) > tresh_covisibility:
             pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
             if np.asarray(pcd.points).shape[0] < 20:
@@ -126,7 +105,7 @@ voxel_size = 0.05
 nr_start = 300
 nr_end = 500
 tresh_covisibility = 0.7
-n_local_map = 5
+n_local_map = 10
 max_correspondence_distance_coarse = voxel_size * 15
 max_correspondence_distance_fine = voxel_size * 1.5
 rgbd_prev = None
@@ -145,38 +124,20 @@ for nr_frame, (f1, f2) in enumerate(zip(color_files[nr_start:nr_end], depth_file
     print(nr_frame)
     rgbd = read_rgbd_image(f1, f2, True, config)
     change_resolution(rgbd, r=r)
-    # print(111111111111, np.asarray(rgbd.depth).shape, np.sum(np.asarray(rgbd.depth)))
     if height is None:
         height, width = np.asarray(rgbd.color).shape[:2]
 
     if rgbd_prev is not None:
-        # (success, trans, info), t = get_time(lambda: register_one_rgbd_pair(rgbd_prev, rgbd,
-        #                                                                     intrinsic, True, config,
-        #                                                                    flag_not_close=True))
-
-        (trans, _), t = get_time(lambda: pairwise_registration(rgbd, rgbd_prev) )
+        (trans, _), t = get_time(lambda: pairwise_registration(rgbd_prev, rgbd))
         if trans is None:
             continue
-        # trans = np.eye(4)
-        # trans[:3,3] = nr_frame
-        T_cumulative = np.matmul(T_cumulative, trans)
-        # T_cumulative1 = np.matmul(np.linalg.inv(trans),  T_cumulative)
-        # print(np.sum(T_cumulative - T_cumulative1))
-        # print(111111111111111111111111111111111)
-        # print(T_cumulative)
+        T_cumulative = np.matmul(trans, T_cumulative)
         find_local_rgbs(rgbds[-n_local_map:], T_cumulative, pose_graph, rgbd, len(rgbds))
         ts.append(ts[-1] + trans[:3, 3])
 
-        # pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(T_cumulative)))
-        pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(T_cumulative))
+        pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(T_cumulative)))
 
     rgbds.append((len(rgbds), rgbd))
-
-    # if cloud is None:
-    #     cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
-    # else:
-    #     cloud += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic).transform(T_cumulative)
-    # cloud = cloud.voxel_down_sample(voxel_size)
     rgbd_prev = rgbd
 
 print("Optimizing PoseGraph ...")
@@ -204,4 +165,3 @@ np_cloud = np.concatenate(np_cloud)
 
 print("len(clouds)", len(clouds))
 o3d.visualization.draw_geometries(clouds)
-# o3d.visualization.draw_geometries([cloud])
