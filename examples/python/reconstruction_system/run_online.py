@@ -10,6 +10,7 @@ import open3d as o3d
 sys.path.append("../utility")
 from make_fragments import read_rgbd_image, pose_estimation, change_resolution
 from initialize_config import initialize_config
+from scipy.spatial.transform import Rotation
 
 
 def pairwise_registration(source, target):
@@ -54,25 +55,24 @@ initialize_config(config)
 intrinsic = o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"])
 
 
-def get_mask_visible(rgbd, T_frame, T_camera_inv, flag_testing=False):
+def get_mask_visible(rgbd, T_viewpoint, T_rgbd, flag_testing=False):
     global height, width
     if flag_testing:
         height, width = 120, 160
         pcd = rgbd
     else:
-
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
-        pcd = pcd.transform(np.matmul(T_frame, T_camera_inv))
+        # vispirms transformee pcd uz 0, peec tam uz viewpoint
+        pcd = pcd.transform(np.matmul(T_viewpoint, np.linalg.inv(T_rgbd)))
         pcd = np.asarray(pcd.points)
 
     pcd2 = np.dot(intrinsic.intrinsic_matrix, pcd.T).T
     pcd2[:, 0] /= pcd2[:, 2]
     pcd2[:, 1] /= pcd2[:, 2]
-    pcd2 = pcd2[:, :2]
 
-    return np.logical_and(
-        np.logical_and(0 <= pcd2[:, 0], pcd2[:, 0] <= width),
-        np.logical_and(0 <= pcd2[:, 1], pcd2[:, 1] <= height))
+    return np.logical_and(pcd2[:, 2] > 0.0, np.logical_and(
+        np.logical_and(0 <= pcd2[:, 0], pcd2[:, 0] < width),
+        np.logical_and(0 <= pcd2[:, 1], pcd2[:, 1] < height)))
 
 
 def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
@@ -80,10 +80,12 @@ def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
 
     if np.asarray(pcd0.points).shape[0] < 20:
         return
-    T_camera_inv = np.linalg.inv(trans)
+
     for source_id, rgbd in list_local_map:
-        mask = get_mask_visible(rgbd, pose_graph.nodes[source_id].pose, T_camera_inv)
-        print(np.average(mask))
+        pose = np.linalg.inv(pose_graph.nodes[source_id].pose)
+        mask = get_mask_visible(rgbd, trans, pose)
+        # m = np.matmul(trans, np.linalg.inv(pose))[:3, :3]
+        # print(2222, np.linalg.det(m), Rotation.from_matrix(m).as_rotvec(), np.average(mask))
         if np.average(mask) > tresh_covisibility:
             pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
             if np.asarray(pcd.points).shape[0] < 20:
