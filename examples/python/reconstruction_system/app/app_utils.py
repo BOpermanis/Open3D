@@ -11,7 +11,22 @@ class Frame:
         self.id = Frame.cnt
         Frame.cnt += 1
         self.cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, Frame.stream_config["intrinsic"])
-        self.cloud.estimate_normals()
+
+        self.cloud = self.cloud.voxel_down_sample(Frame.stream_config['voxel_size'])
+
+        self.search_tree_param = o3d.geometry.KDTreeSearchParamHybrid(
+            radius=self.stream_config["voxel_size"] * 3.0,
+            max_nn=30)
+
+        self.cloud.estimate_normals(self.search_tree_param)
+
+        self.fpfh = o3d.pipelines.registration.compute_fpfh_feature(self.cloud, self.search_tree_param)
+
+        self.kps = o3d.geometry.keypoint.compute_iss_keypoints(self.cloud)
+        hash_cloud = np.sum(np.asarray(self.cloud.points), axis=1)
+        hash_kps = np.sum(np.asarray(self.kps.points), axis=1)
+        self.fpfh_at_kps = self.fpfh.data[:, hash_cloud == hash_kps]
+
         self.T = None
         self.__dict__.update(kwargs)
 
