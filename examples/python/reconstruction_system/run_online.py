@@ -18,6 +18,7 @@ def pairwise_registration(source, target):
         source = o3d.geometry.PointCloud.create_from_rgbd_image(source, intrinsic)
         target = o3d.geometry.PointCloud.create_from_rgbd_image(target, intrinsic)
 
+    # keypoints = o3d.geometry.keypoint.compute_iss_keypoints(source)
     if np.asarray(target.points).shape[0] < 20:
         return None, None
     target.estimate_normals()
@@ -45,7 +46,8 @@ path_rgb = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "re
 path_depth = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "depth")
 
 # path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_100p.json"); r = 1.0
-path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_25p.json"); r = 0.25
+# path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_25p.json"); r = 0.25
+path_intrinsic = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense", "intrinsic_20p.json"); r = 0.2
 
 
 path_dataset = join("C:\\", "Users", "bruno", "data", "from_realsense", "test1", "realsense.bag")
@@ -53,6 +55,9 @@ config = {"path_dataset": "nothing", "path_intrinsic": path_intrinsic}
 initialize_config(config)
 
 intrinsic = o3d.io.read_pinhole_camera_intrinsic(config["path_intrinsic"])
+# print(intrinsic)
+# print(intrinsic.intrinsic_matrix)
+# exit()
 
 
 def get_mask_visible(rgbd, T_viewpoint, T_rgbd, flag_testing=False):
@@ -104,9 +109,9 @@ def find_local_rgbs(list_local_map, trans, pose_graph, rgbd0, target_id):
 color_files, depth_files = sorted(glob(join(path_rgb, "*.jpg"))), sorted(glob(join(path_depth, "*.png")))
 
 
-voxel_size = 0.05
 nr_start = 300
 nr_end = 500
+voxel_size = 0.05
 tresh_covisibility = 0.7
 n_local_map = 10
 max_correspondence_distance_coarse = voxel_size * 15
@@ -124,7 +129,7 @@ pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.eye(4)))
 T_cumulative = np.eye(4)
 rgbd = None
 for nr_frame, (f1, f2) in enumerate(zip(color_files[nr_start:nr_end], depth_files[nr_start:nr_end])):
-    print(nr_frame)
+
     rgbd = read_rgbd_image(f1, f2, True, config)
     change_resolution(rgbd, r=r)
     if height is None:
@@ -132,6 +137,7 @@ for nr_frame, (f1, f2) in enumerate(zip(color_files[nr_start:nr_end], depth_file
 
     if rgbd_prev is not None:
         (trans, _), t = get_time(lambda: pairwise_registration(rgbd_prev, rgbd))
+        print(nr_frame, t)
         if trans is None:
             continue
         T_cumulative = np.matmul(trans, T_cumulative)

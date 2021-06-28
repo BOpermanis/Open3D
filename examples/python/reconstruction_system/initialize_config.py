@@ -9,7 +9,7 @@ import sys
 from os.path import join
 
 sys.path.append("../utility")
-from file import check_folder_structure, extract_rgbd_frames
+from examples.python.utility.file import check_folder_structure, extract_rgbd_frames
 
 
 def set_default_value(config, key, value):

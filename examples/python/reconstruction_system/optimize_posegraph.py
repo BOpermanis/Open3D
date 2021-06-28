@@ -7,8 +7,8 @@
 import open3d as o3d
 import sys
 
-sys.path.append("../utility")
-from file import join
+# sys.path.append("../utility")
+from examples.python.utility.file import join
 
 
 def run_posegraph_optimization(pose_graph_name, pose_graph_optimized_name,

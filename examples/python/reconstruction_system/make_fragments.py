@@ -9,17 +9,16 @@ import sys
 import numpy as np
 import open3d as o3d
 import cv2
-sys.path.append("../utility")
-from file import join, make_clean_folder, get_rgbd_file_lists
-from opencv import initialize_opencv
+# sys.path.append("../utility")
+from examples.python.utility.file import join, make_clean_folder, get_rgbd_file_lists
+from examples.python.utility.opencv import initialize_opencv
 
-sys.path.append(".")
-from optimize_posegraph import optimize_posegraph_for_fragment
+from examples.python.reconstruction_system.optimize_posegraph import optimize_posegraph_for_fragment
 
 # check opencv python package
 with_opencv = initialize_opencv()
 if with_opencv:
-    from opencv_pose_estimation import pose_estimation
+    from examples.python.reconstruction_system.opencv_pose_estimation import pose_estimation
 
 
 def change_resolution(rgbd, w=None, h=None, r=None):
