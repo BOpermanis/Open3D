@@ -1,22 +1,6 @@
 import pyrealsense2 as rs
 import numpy as np
 
-x = [
-		152.23756409,
-		0.0,
-		0.0,
-		0.0,
-		152.2297821,
-		0.0,
-		79.4900589,
-		62.52014542,
-		1.0
-	]
-
-x = 4 * np.asarray(x) / 5
-
-print(x)
-exit()
 
 def initialize_camera():
     # start the frames pipe

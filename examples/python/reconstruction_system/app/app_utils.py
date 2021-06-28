@@ -5,8 +5,11 @@ from time import time
 
 class Frame:
     stream_config = None
+    cnt = 0
 
     def __init__(self, rgbd, **kwargs):
+        self.id = Frame.cnt
+        Frame.cnt += 1
         self.cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, Frame.stream_config["intrinsic"])
         self.cloud.estimate_normals()
         self.T = None

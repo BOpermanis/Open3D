@@ -123,6 +123,7 @@ height, width = None, None
 ts = [np.zeros((3,))]
 rgbds = []
 cloud = None
+t_start = time()
 pose_graph = o3d.pipelines.registration.PoseGraph()
 pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.eye(4)))
 
@@ -173,4 +174,5 @@ for id_rgbd, rgbd in rgbds:
 np_cloud = np.concatenate(np_cloud)
 
 print("len(clouds)", len(clouds))
+print("time: ", time() - t_start)
 o3d.visualization.draw_geometries(clouds)
