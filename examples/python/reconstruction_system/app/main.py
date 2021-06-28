@@ -33,8 +33,8 @@ stream_config.update({
     "voxel_size": voxel_size,
     "tresh_covisibility": 0.7,
     "tresh_too_similar": 0.9,
-    "kf_angle": (0.05, 0.3),
-    "kf_trans": (0.05, 0.3),
+    "kf_angle": (0.1, 0.3),
+    "kf_trans": (0.1, 0.3),
     "max_correspondence_distance_coarse": voxel_size * 15,
     "max_correspondence_distance_fine": voxel_size * 1.5
 })
@@ -65,11 +65,11 @@ for nr_frame, (f1, f2) in enumerate(zip(color_files[nr_start:nr_end], depth_file
         frame.T = T_cumulative
         mapper.update_map(frame)
 
-    # if nr_frame % 50 == 0 and nr_frame > 0:
-    #     mapper.optimize()
+    if nr_frame % 50 == 0 and nr_frame > 0:
+        T_cumulative = mapper.optimize(T_cumulative)
     prev_frame = frame
 
-mapper.optimize()
+mapper.optimize(T_cumulative)
 print("len(clouds)", len(mapper.kfs))
 print("time: ", time() - t_start)
 o3d.visualization.draw_geometries([mapper.get_total_cloud()])

@@ -10,7 +10,7 @@ class Mapper:
 
     def __init__(self, T_start):
         self.pose_graph = o3d.pipelines.registration.PoseGraph()
-
+        self.T_of_last_kf = None
         self.kfs = OrderedDict() #keyframes
 
     def update_map(self, frame):
@@ -18,6 +18,7 @@ class Mapper:
             frame.id_pose_graph = len(self.pose_graph.nodes)
             self.pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(frame.T)))
             self.kfs[frame.id] = frame
+            self.T_of_last_kf = frame.T
             return True
 
         rotvec = Rotation.from_matrix(frame.T[:3, :3]).as_rotvec()
@@ -45,10 +46,11 @@ class Mapper:
 
                 # print(i_kf, np.logical_and(rot_dists < Mr, trans_dists < Mt).shape)
             self.kfs[frame.id] = frame
+            self.T_of_last_kf = frame.T
             self.pose_graph.nodes.append(o3d.pipelines.registration.PoseGraphNode(np.linalg.inv(frame.T)))
         return True
 
-    def optimize(self):
+    def optimize(self, T_now):
         option = o3d.pipelines.registration.GlobalOptimizationOption(
             max_correspondence_distance=Mapper.stream_config["max_correspondence_distance_fine"],
             edge_prune_threshold=0.25,
@@ -62,9 +64,11 @@ class Mapper:
                 option)
 
         node2frame = {frame.id_pose_graph: frame.id for frame in self.kfs.values()}
-        # update frames
         for i_node in range(len(self.pose_graph.nodes)):
             self.kfs[node2frame[i_node]].T = np.linalg.inv(self.pose_graph.nodes[i_node].pose)
+            if i_node == len(self.pose_graph.nodes) - 1:
+                T_now = np.dot(self.kfs[node2frame[i_node]].T, np.dot(np.linalg.inv(self.T_of_last_kf), T_now))
+        return T_now
 
     def get_total_cloud(self):
         total_cloud = None
